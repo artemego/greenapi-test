@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthenticationModule } from '@nestjs/authentication';
 import { AuthModule } from './auth/auth.module.js';
+import { ChatsModule } from './chats/chats.module.js';
 import { envSchema, type AppConfigService } from './config/env.js';
 import { InstancesModule } from './instances/instances.module.js';
 
@@ -41,6 +42,7 @@ import { InstancesModule } from './instances/instances.module.js';
     }),
     InstancesModule,
     AuthModule,
+    ChatsModule,
   ],
 })
 export class AppModule {}
