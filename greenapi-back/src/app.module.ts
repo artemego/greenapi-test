@@ -5,6 +5,7 @@ import { AuthenticationModule } from '@nestjs/authentication';
 import { AuthModule } from './auth/auth.module.js';
 import { ChatsModule } from './chats/chats.module.js';
 import { envSchema, type AppConfigService } from './config/env.js';
+import { EventsModule } from './events/events.module.js';
 import { InstancesModule } from './instances/instances.module.js';
 import { MessagesModule } from './messages/messages.module.js';
 
@@ -45,6 +46,7 @@ import { MessagesModule } from './messages/messages.module.js';
     AuthModule,
     ChatsModule,
     MessagesModule,
+    EventsModule,
   ],
 })
 export class AppModule {}

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Repository } from 'typeorm';
 import { Chat } from '../chats/chat.entity.js';
 import { ChatsService } from '../chats/chats.service.js';
+import { EventBusService } from '../events/event-bus.service.js';
 import { GreenApiClient } from '../green-api/green-api.client.js';
 import { toHttpError } from '../green-api/green-api-http-error.js';
 import { InstancesService } from '../instances/instances.service.js';
@@ -33,6 +34,7 @@ export class MessagesService {
     private readonly chats: ChatsService,
     private readonly instances: InstancesService,
     private readonly greenApi: GreenApiClient,
+    private readonly bus: EventBusService,
   ) {}
 
   /** One page of history, returned oldest first. */
@@ -73,8 +75,10 @@ export class MessagesService {
       }),
     );
     await this.bumpLastMessageAt(chat.id, message.sentAt);
-    // TODO(step 7): emit `message.created` so other open tabs update.
-    return toMessageView(message);
+    const view = toMessageView(message);
+    // Lets the instance's other open tabs show the message too.
+    this.bus.emit(instanceId, 'message.created', { chatId: chat.id, message: view });
+    return view;
   }
 
   /** Moves `Chat.lastMessageAt` forward only (messages can be stored out of order). */

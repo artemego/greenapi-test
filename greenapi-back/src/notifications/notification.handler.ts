@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Chat } from '../chats/chat.entity.js';
+import { toChatView } from '../chats/chats.service.js';
+import { EventBusService } from '../events/event-bus.service.js';
 import type {
   IncomingMessageReceived,
   MessageData,
@@ -10,7 +12,7 @@ import type {
 } from '../green-api/green-api.types.js';
 import { InstancesService } from '../instances/instances.service.js';
 import { Message, type MessageDirection } from '../messages/message.entity.js';
-import { MessagesService } from '../messages/messages.service.js';
+import { MessagesService, toMessageView } from '../messages/messages.service.js';
 
 /**
  * Turns one GREEN-API notification into database rows. Idempotent: the same
@@ -26,6 +28,7 @@ export class NotificationHandler {
     @InjectRepository(Message) private readonly messages: Repository<Message>,
     private readonly messagesService: MessagesService,
     private readonly instances: InstancesService,
+    private readonly bus: EventBusService,
   ) {}
 
   async handle(instanceId: string, body: NotificationBody): Promise<void> {
@@ -38,7 +41,7 @@ export class NotificationHandler {
       case 'stateInstanceChanged':
         await this.instances.setState(instanceId, body.stateInstance);
         this.logger.log(`Instance state changed to ${body.stateInstance}`);
-        // TODO(step 7): emit `instance.state`.
+        this.bus.emit(instanceId, 'instance.state', { state: body.stateInstance });
         return;
       default:
         this.logger.debug(`Ignored notification ${body.originalType || '(no type)'}`);
@@ -66,26 +69,30 @@ export class NotificationHandler {
       return;
     }
 
-    const chat = await this.findOrCreateChat(instanceId, body, direction);
+    const { chat, created } = await this.findOrCreateChat(instanceId, body, direction);
+    const sentAt = new Date(body.timestamp * 1000);
 
     const inserted = await this.messages
       .createQueryBuilder()
       .insert()
-      .values({
-        chatId: chat.id,
-        idMessage: body.idMessage,
-        direction,
-        text,
-        sentAt: new Date(body.timestamp * 1000),
-      })
+      .values({ chatId: chat.id, idMessage: body.idMessage, direction, text, sentAt })
       .orIgnore()
       .returning('id')
       .execute();
-    if ((inserted.raw as unknown[]).length === 0) return; // already stored
+    const rows = inserted.raw as { id: string }[];
+    if (rows.length === 0) return; // already stored: no events either
 
-    await this.messagesService.bumpLastMessageAt(chat.id, new Date(body.timestamp * 1000));
+    await this.messagesService.bumpLastMessageAt(chat.id, sentAt);
     this.logger.log(`Stored ${direction} message in chat ${chat.id}`);
-    // TODO(step 7): emit `message.created`.
+
+    // chat.created goes first and already carries the message, so a client can render the new chat whole.
+    if (created) {
+      const lastMessageAt =
+        chat.lastMessageAt && chat.lastMessageAt > sentAt ? chat.lastMessageAt : sentAt;
+      this.bus.emit(instanceId, 'chat.created', { ...toChatView(chat, text), lastMessageAt });
+    }
+    const message = Object.assign(new Message(), { id: rows[0].id, direction, text, sentAt });
+    this.bus.emit(instanceId, 'message.created', { chatId: chat.id, message: toMessageView(message) });
   }
 
   /** The chat for the notification's chatId; a message from a new sender creates one. */
@@ -93,7 +100,7 @@ export class NotificationHandler {
     instanceId: string,
     body: IncomingMessageReceived | OutgoingMessageReceived,
     direction: MessageDirection,
-  ): Promise<Chat> {
+  ): Promise<{ chat: Chat; created: boolean }> {
     const { senderData } = body;
     const chatId = String(senderData.chatId);
     const name = senderData.chatName || (direction === 'incoming' ? senderData.senderName : '') || null;
@@ -112,8 +119,7 @@ export class NotificationHandler {
     const chat = await this.chats.findOneByOrFail({ instanceId, chatId });
     if ((result.raw as unknown[]).length > 0) {
       this.logger.log(`New chat ${chat.id} created from an ${direction} message`);
-      // TODO(step 7): emit `chat.created`.
-      return chat;
+      return { chat, created: true };
     }
 
     // Existing chat: fill in what it was missing.
@@ -124,7 +130,7 @@ export class NotificationHandler {
       await this.chats.update({ id: chat.id }, patch);
       Object.assign(chat, patch);
     }
-    return chat;
+    return { chat, created: false };
   }
 }
 

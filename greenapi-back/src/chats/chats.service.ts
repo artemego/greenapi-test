@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventBusService } from '../events/event-bus.service.js';
 import { GreenApiClient } from '../green-api/green-api.client.js';
 import { toHttpError } from '../green-api/green-api-http-error.js';
 import { InstancesService } from '../instances/instances.service.js';
@@ -40,6 +41,7 @@ export class ChatsService {
     @InjectRepository(Chat) private readonly repo: Repository<Chat>,
     private readonly greenApi: GreenApiClient,
     private readonly instances: InstancesService,
+    private readonly bus: EventBusService,
   ) {}
 
   /** Chats of the instance, most recent conversation first. */
@@ -122,7 +124,9 @@ export class ChatsService {
       .returning('id')
       .execute();
     const chat = await this.repo.findOneByOrFail({ instanceId, chatId });
-    return { chat, created: (result.raw as unknown[]).length > 0 };
+    const created = (result.raw as unknown[]).length > 0;
+    if (created) this.bus.emit(instanceId, 'chat.created', toChatView(chat));
+    return { chat, created };
   }
 
   /** A chat of this instance, or 404 (also for chats of other instances). */

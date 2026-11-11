@@ -5,6 +5,7 @@ import {
   type OnModuleDestroy,
 } from '@nestjs/common';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { EventBusService } from '../events/event-bus.service.js';
 import { GreenApiClient } from '../green-api/green-api.client.js';
 import { GreenApiError } from '../green-api/green-api.error.js';
 import { InstancesService } from '../instances/instances.service.js';
@@ -41,6 +42,7 @@ export class NotificationPollerService implements OnApplicationBootstrap, OnModu
     private readonly instances: InstancesService,
     private readonly handler: NotificationHandler,
     private readonly settings: NotificationSettingsService,
+    private readonly bus: EventBusService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -97,7 +99,7 @@ export class NotificationPollerService implements OnApplicationBootstrap, OnModu
         if (err instanceof GreenApiError && err.isUnauthorized) {
           this.logger.warn(`Instance ${creds.idInstance}: token rejected, polling stopped`);
           await this.instances.setState(instanceId, 'notAuthorized');
-          // TODO(step 7): emit `instance.state`.
+          this.bus.emit(instanceId, 'instance.state', { state: 'notAuthorized' });
           return;
         }
         if (err instanceof GreenApiError && err.status === 400) {
