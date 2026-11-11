@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { ChatsModule } from './chats/chats.module.js';
 import { envSchema, type AppConfigService } from './config/env.js';
 import { InstancesModule } from './instances/instances.module.js';
+import { MessagesModule } from './messages/messages.module.js';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { InstancesModule } from './instances/instances.module.js';
     InstancesModule,
     AuthModule,
     ChatsModule,
+    MessagesModule,
   ],
 })
 export class AppModule {}

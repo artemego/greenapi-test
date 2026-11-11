@@ -50,8 +50,29 @@ export class ChatsService {
       .orderBy('chat.lastMessageAt', 'DESC', 'NULLS LAST')
       .addOrderBy('chat.createdAt', 'DESC')
       .getMany();
-    // TODO(step 5): join the latest message text once the Message entity exists.
-    return chats.map((chat) => toChatView(chat));
+    const lastTexts = await this.lastMessageTexts(chats.map((chat) => chat.id));
+    return chats.map((chat) => toChatView(chat, lastTexts.get(chat.id) ?? null));
+  }
+
+  /**
+   * Latest message text per chat, in one query (Postgres DISTINCT ON). Uses
+   * the table name rather than the Message entity so this module does not
+   * depend on the messages module, which depends on this one.
+   */
+  private async lastMessageTexts(chatIds: string[]): Promise<Map<string, string>> {
+    if (chatIds.length === 0) return new Map();
+    const rows = await this.repo.manager
+      .createQueryBuilder()
+      .select('m."chatId"', 'chatId')
+      .addSelect('m.text', 'text')
+      .distinctOn(['m."chatId"'])
+      .from('messages', 'm')
+      .where('m."chatId" IN (:...chatIds)', { chatIds })
+      .orderBy('m."chatId"')
+      .addOrderBy('m."sentAt"', 'DESC')
+      .addOrderBy('m."createdAt"', 'DESC')
+      .getRawMany<{ chatId: string; text: string }>();
+    return new Map(rows.map((row) => [row.chatId, row.text]));
   }
 
   /**
@@ -104,7 +125,7 @@ export class ChatsService {
     return { chat, created: (result.raw as unknown[]).length > 0 };
   }
 
-  /** A chat of this instance, or 404 (also for chats of other instances). For step 5. */
+  /** A chat of this instance, or 404 (also for chats of other instances). */
   async findOwned(instanceId: string, id: string): Promise<Chat> {
     const chat = await this.repo.findOneBy({ instanceId, id });
     if (!chat) throw new NotFoundException('Chat not found');
