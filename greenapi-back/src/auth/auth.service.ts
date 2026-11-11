@@ -11,22 +11,12 @@ import { SignInService } from '@nestjs/authentication';
 import type { AppConfigService } from '../config/env.js';
 import { GreenApiClient } from '../green-api/green-api.client.js';
 import { GreenApiError } from '../green-api/green-api.error.js';
-import type {
-  GreenApiCredentials,
-  GreenApiSettings,
-  SetSettingsRequest,
-} from '../green-api/green-api.types.js';
+import type { GreenApiCredentials } from '../green-api/green-api.types.js';
 import type { Instance } from '../instances/instance.entity.js';
 import { InstancesService } from '../instances/instances.service.js';
+import { NotificationPollerService } from '../notifications/notification-poller.service.js';
+import { NotificationSettingsService } from '../notifications/notification-settings.service.js';
 import type { LoginDto } from './login.schema.js';
-
-/** Notification settings the poller (step 6) needs: HTTP API queue, no webhook. */
-const REQUIRED_SETTINGS = {
-  webhookUrl: '',
-  incomingWebhook: 'yes',
-  outgoingMessageWebhook: 'yes',
-  stateWebhook: 'yes',
-} as const satisfies SetSettingsRequest;
 
 export interface InstanceView {
   idInstance: string;
@@ -45,6 +35,8 @@ export class AuthService {
     private readonly greenApi: GreenApiClient,
     private readonly instances: InstancesService,
     private readonly signIn: SignInService,
+    private readonly notificationSettings: NotificationSettingsService,
+    private readonly poller: NotificationPollerService,
     @Inject(ConfigService) private readonly config: AppConfigService,
   ) {}
 
@@ -67,43 +59,21 @@ export class AuthService {
     }
 
     const instance = await this.instances.upsertByIdInstance(creds, stateInstance);
-    await this.ensureNotificationSettings(creds, instance.idInstance);
+    // Never fails the login: errors are logged, and the poller re-checks on HTTP 400.
+    await this.notificationSettings.ensure(creds);
     await this.signIn.signIn(instance.id, { method: 'green-api' });
+    this.poller.start(instance.id);
 
     this.logger.log(`Instance ${instance.idInstance} logged in`);
     return toInstanceView(instance);
   }
 
-  /** Ends this browser's session; a request without one is not an error. */
+  /**
+   * Ends this browser's session; a request without one is not an error. The
+   * instance's poller stops on its own once no live session is left.
+   */
   async logout(): Promise<void> {
     await this.signIn.signOut();
-  }
-
-  /**
-   * Turns on the HTTP API notification queue, but only when something is off:
-   * `setSettings` restarts the instance, which must not happen on every login.
-   * Failures are logged, not thrown: the login itself is valid either way, and
-   * the poller re-checks the settings when the queue refuses to work.
-   */
-  private async ensureNotificationSettings(
-    creds: GreenApiCredentials,
-    idInstance: string,
-  ): Promise<void> {
-    try {
-      const current = await this.greenApi.getSettings(creds);
-      if (settingsAreReady(current)) {
-        this.logger.log(`Instance ${idInstance}: notification settings already OK`);
-        return;
-      }
-      await this.greenApi.setSettings(creds, REQUIRED_SETTINGS);
-      this.logger.warn(
-        `Instance ${idInstance}: notification settings updated via setSettings (instance restarts, up to 5 min)`,
-      );
-    } catch (err) {
-      this.logger.error(
-        `Instance ${idInstance}: could not check notification settings: ${(err as Error).message}`,
-      );
-    }
   }
 
   /** Maps GREEN-API failures to HTTP errors for the login route. */
@@ -120,13 +90,4 @@ export class AuthService {
       throw new BadGatewayException('GREEN-API is unavailable, try again later');
     }
   }
-}
-
-function settingsAreReady(s: GreenApiSettings): boolean {
-  return (
-    !s.webhookUrl &&
-    s.incomingWebhook === 'yes' &&
-    s.outgoingMessageWebhook === 'yes' &&
-    s.stateWebhook === 'yes'
-  );
 }

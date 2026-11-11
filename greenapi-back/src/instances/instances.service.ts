@@ -52,4 +52,29 @@ export class InstancesService {
   async setState(id: string, state: InstanceState): Promise<void> {
     await this.repo.update({ id }, { state });
   }
+
+  // The two queries below read the `sessions` table (auth module) by name, so
+  // this module does not depend on auth.
+
+  /** Ids of instances someone is logged in with: their notifications get polled. */
+  async findIdsWithLiveSessions(): Promise<string[]> {
+    const rows = await this.repo.manager
+      .createQueryBuilder()
+      .select('DISTINCT s."userId"', 'id')
+      .from('sessions', 's')
+      .where('s."expiresAt" > now()')
+      .getRawMany<{ id: string }>();
+    return rows.map((row) => row.id);
+  }
+
+  async hasLiveSession(id: string): Promise<boolean> {
+    const row = await this.repo.manager
+      .createQueryBuilder()
+      .select('1', 'one')
+      .from('sessions', 's')
+      .where('s."userId" = :id AND s."expiresAt" > now()', { id })
+      .limit(1)
+      .getRawOne();
+    return row !== undefined;
+  }
 }
