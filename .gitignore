@@ -29,6 +29,7 @@ coverage/
 # Temp
 .temp/
 .tmp/
+docs/
 
 # Runtime data
 pids/
