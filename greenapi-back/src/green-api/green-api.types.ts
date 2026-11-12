@@ -25,6 +25,7 @@ export interface GreenApiSettings {
   incomingWebhook: YesNo;
   outgoingMessageWebhook: YesNo;
   outgoingAPIMessageWebhook: YesNo;
+  outgoingWebhook: YesNo;
   stateWebhook: YesNo;
   [key: string]: unknown;
 }
@@ -99,6 +100,20 @@ export interface StateInstanceChanged {
   stateInstance: InstanceState;
 }
 
+/**
+ * Status of a message this instance sent. Telegram reports `delivered`, `read`,
+ * and the errors `failed`, `noAccount`, `suspended`; error bodies may lack `idMessage`.
+ */
+export interface OutgoingMessageStatus {
+  typeWebhook: 'outgoingMessageStatus';
+  instanceData: InstanceData;
+  timestamp: number;
+  chatId: string;
+  idMessage?: string;
+  status: string;
+  description?: string;
+}
+
 /** Any `typeWebhook` this app does not handle; the original type is kept for logging. */
 export interface UnknownNotification {
   typeWebhook: 'unknown';
@@ -108,6 +123,7 @@ export interface UnknownNotification {
 export type NotificationBody =
   | IncomingMessageReceived
   | OutgoingMessageReceived
+  | OutgoingMessageStatus
   | StateInstanceChanged
   | UnknownNotification;
 

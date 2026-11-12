@@ -12,6 +12,17 @@ import { Chat } from '../chats/chat.entity.js';
 
 export type MessageDirection = 'incoming' | 'outgoing';
 
+/** Delivery status of an outgoing message; it only moves forward (see `MessageStatusRank`). */
+export type MessageStatus = 'sent' | 'delivered' | 'read' | 'failed';
+
+/** `failed` ranks with `delivered`: it replaces `sent` but never a delivered or read message. */
+export const MessageStatusRank: Record<MessageStatus, number> = {
+  sent: 0,
+  delivered: 1,
+  failed: 1,
+  read: 2,
+};
+
 /**
  * A text message in a chat. The unique (chat, idMessage) key makes storing a
  * GREEN-API message idempotent, which the notification poller relies on.
@@ -40,6 +51,10 @@ export class Message {
 
   @Column('text')
   text: string;
+
+  /** Outgoing messages only. Null for incoming ones and for rows stored before statuses existed. */
+  @Column({ type: 'varchar', nullable: true })
+  status: MessageStatus | null;
 
   @Column({ type: 'timestamptz' })
   sentAt: Date;

@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { filter, map, Subject, type Observable } from 'rxjs';
 import type { ChatView } from '../chats/chats.service.js';
 import type { InstanceState } from '../green-api/green-api.types.js';
+import type { MessageStatus } from '../messages/message.entity.js';
 import type { MessageView } from '../messages/messages.service.js';
 
 /** Event name -> payload. Payloads use the same shapes as the REST API. */
 export interface AppEventMap {
   /** `chatId` is `Chat.id` (our uuid), as in `/chats/:id/messages`. */
   'message.created': { chatId: string; message: MessageView };
+  /** An outgoing message moved forward: delivered, read, or failed. */
+  'message.status': { chatId: string; messageId: string; status: MessageStatus };
   'chat.created': ChatView;
   'instance.state': { state: InstanceState };
 }

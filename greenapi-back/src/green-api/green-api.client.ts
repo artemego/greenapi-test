@@ -19,6 +19,7 @@ const LONG_POLL_GRACE_MS = 10_000;
 const KNOWN_WEBHOOK_TYPES = new Set([
   'incomingMessageReceived',
   'outgoingMessageReceived',
+  'outgoingMessageStatus',
   'stateInstanceChanged',
 ]);
 

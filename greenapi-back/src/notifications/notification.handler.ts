@@ -9,9 +9,15 @@ import type {
   MessageData,
   NotificationBody,
   OutgoingMessageReceived,
+  OutgoingMessageStatus,
 } from '../green-api/green-api.types.js';
 import { InstancesService } from '../instances/instances.service.js';
-import { Message, type MessageDirection } from '../messages/message.entity.js';
+import {
+  Message,
+  MessageStatusRank,
+  type MessageDirection,
+  type MessageStatus,
+} from '../messages/message.entity.js';
 import { MessagesService, toMessageView } from '../messages/messages.service.js';
 
 /**
@@ -38,6 +44,8 @@ export class NotificationHandler {
       case 'outgoingMessageReceived':
         // Typed in the Telegram app itself: stored so the conversation stays complete.
         return this.storeMessage(instanceId, body, 'outgoing');
+      case 'outgoingMessageStatus':
+        return this.updateStatus(instanceId, body);
       case 'stateInstanceChanged':
         await this.instances.setState(instanceId, body.stateInstance);
         this.logger.log(`Instance state changed to ${body.stateInstance}`);
@@ -75,7 +83,14 @@ export class NotificationHandler {
     const inserted = await this.messages
       .createQueryBuilder()
       .insert()
-      .values({ chatId: chat.id, idMessage: body.idMessage, direction, text, sentAt })
+      .values({
+        chatId: chat.id,
+        idMessage: body.idMessage,
+        direction,
+        text,
+        sentAt,
+        status: direction === 'outgoing' ? 'sent' : null,
+      })
       .orIgnore()
       .returning('id')
       .execute();
@@ -93,6 +108,36 @@ export class NotificationHandler {
     }
     const message = Object.assign(new Message(), { id: rows[0].id, direction, text, sentAt });
     this.bus.emit(instanceId, 'message.created', { chatId: chat.id, message: toMessageView(message) });
+  }
+
+  /**
+   * Applies a delivery status to a stored outgoing message, forward only, so a
+   * late or redelivered `delivered` never overwrites `read`. A status for a
+   * message this app has not stored (yet) is dropped.
+   */
+  private async updateStatus(instanceId: string, body: OutgoingMessageStatus): Promise<void> {
+    const status = toMessageStatus(body.status);
+    if (!status || !body.idMessage) {
+      this.logger.debug(`Ignored outgoing status ${body.status} without a usable message id`);
+      return;
+    }
+
+    const chat = await this.chats.findOneBy({ instanceId, chatId: String(body.chatId) });
+    const message =
+      chat &&
+      (await this.messages.findOneBy({
+        chatId: chat.id,
+        idMessage: body.idMessage,
+        direction: 'outgoing',
+      }));
+    if (!chat || !message) {
+      this.logger.debug(`Ignored status ${status} for an unknown message`);
+      return;
+    }
+
+    if (MessageStatusRank[status] <= MessageStatusRank[message.status ?? 'sent']) return;
+    await this.messages.update({ id: message.id }, { status });
+    this.bus.emit(instanceId, 'message.status', { chatId: chat.id, messageId: message.id, status });
   }
 
   /** The chat for the notification's chatId; a message from a new sender creates one. */
@@ -131,6 +176,21 @@ export class NotificationHandler {
       Object.assign(chat, patch);
     }
     return { chat, created: false };
+  }
+}
+
+/** GREEN-API's outgoing status mapped to ours; null for statuses the app doesn't show. */
+function toMessageStatus(status: string): MessageStatus | null {
+  switch (status) {
+    case 'delivered':
+    case 'read':
+      return status;
+    case 'failed':
+    case 'noAccount':
+    case 'suspended':
+      return 'failed';
+    default:
+      return null;
   }
 }
 

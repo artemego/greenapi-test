@@ -7,7 +7,7 @@ import { EventBusService } from '../events/event-bus.service.js';
 import { GreenApiClient } from '../green-api/green-api.client.js';
 import { toHttpError } from '../green-api/green-api-http-error.js';
 import { InstancesService } from '../instances/instances.service.js';
-import { Message, type MessageDirection } from './message.entity.js';
+import { Message, type MessageDirection, type MessageStatus } from './message.entity.js';
 import type { HistoryQuery } from './messages.schemas.js';
 
 export interface MessageView {
@@ -15,6 +15,8 @@ export interface MessageView {
   direction: MessageDirection;
   text: string;
   sentAt: Date;
+  /** Null for incoming messages; outgoing rows from before statuses existed read as `sent`. */
+  status: MessageStatus | null;
 }
 
 export function toMessageView(message: Message): MessageView {
@@ -23,6 +25,7 @@ export function toMessageView(message: Message): MessageView {
     direction: message.direction,
     text: message.text,
     sentAt: message.sentAt,
+    status: message.direction === 'outgoing' ? (message.status ?? 'sent') : null,
   };
 }
 
@@ -72,6 +75,7 @@ export class MessagesService {
         direction: 'outgoing',
         text,
         sentAt: new Date(),
+        status: 'sent',
       }),
     );
     await this.bumpLastMessageAt(chat.id, message.sentAt);

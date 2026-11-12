@@ -11,6 +11,7 @@ const REQUIRED_SETTINGS = {
   webhookUrl: '',
   incomingWebhook: 'yes',
   outgoingMessageWebhook: 'yes',
+  outgoingWebhook: 'yes',
   stateWebhook: 'yes',
 } as const satisfies SetSettingsRequest;
 
@@ -50,6 +51,7 @@ function settingsAreReady(s: GreenApiSettings): boolean {
     !s.webhookUrl &&
     s.incomingWebhook === 'yes' &&
     s.outgoingMessageWebhook === 'yes' &&
+    s.outgoingWebhook === 'yes' &&
     s.stateWebhook === 'yes'
   );
 }
