@@ -1,15 +1,31 @@
 import { useState, type SubmitEvent } from 'react';
 import Logo from '@/shared/assets/logo.svg?react';
 import { Button, IconButton, TextField } from '@/shared/ui';
+import { useLogin, type LoginInput } from '../api/useLogin';
+import { toLoginErrors, validateLogin, type LoginErrors } from '../model/loginErrors';
 import styles from './LoginPage.module.scss';
 
 export function LoginPage() {
-  const [idInstance, setIdInstance] = useState('');
-  const [apiTokenInstance, setApiTokenInstance] = useState('');
+  const [values, setValues] = useState<LoginInput>({ idInstance: '', apiTokenInstance: '' });
+  const [errors, setErrors] = useState<LoginErrors>({});
   const [showToken, setShowToken] = useState(false);
+  const login = useLogin();
+
+  function handleChange(field: keyof LoginInput, value: string) {
+    setValues((current) => ({ ...current, [field]: value }));
+    setErrors((current) => ({ ...current, [field]: undefined, form: undefined }));
+  }
 
   function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
+    const input = {
+      idInstance: values.idInstance.trim(),
+      apiTokenInstance: values.apiTokenInstance.trim(),
+    };
+    const validation = validateLogin(input);
+    setErrors(validation);
+    if (Object.keys(validation).length > 0) return;
+    login.mutate(input, { onError: (error) => setErrors(toLoginErrors(error)) });
   }
 
   return (
@@ -31,15 +47,17 @@ export function LoginPage() {
             inputMode="numeric"
             autoComplete="username"
             autoFocus
-            value={idInstance}
-            onChange={(event) => setIdInstance(event.target.value)}
+            value={values.idInstance}
+            error={errors.idInstance}
+            onChange={(event) => handleChange('idInstance', event.target.value)}
           />
           <TextField
             label="apiTokenInstance"
             type={showToken ? 'text' : 'password'}
             autoComplete="current-password"
-            value={apiTokenInstance}
-            onChange={(event) => setApiTokenInstance(event.target.value)}
+            value={values.apiTokenInstance}
+            error={errors.apiTokenInstance}
+            onChange={(event) => handleChange('apiTokenInstance', event.target.value)}
             endAdornment={
               <IconButton
                 icon={showToken ? 'eyeOff' : 'eye'}
@@ -49,9 +67,14 @@ export function LoginPage() {
             }
           />
         </div>
-        <Button type="submit" fullWidth className={styles.submit}>
+        <Button type="submit" fullWidth loading={login.isPending} className={styles.submit}>
           Next
         </Button>
+        {errors.form && (
+          <p className={styles.formError} role="alert">
+            {errors.form}
+          </p>
+        )}
       </form>
     </div>
   );
