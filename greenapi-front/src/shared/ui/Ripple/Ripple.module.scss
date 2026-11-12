@@ -1,0 +1,27 @@
+.container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.wave {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--ripple-color, rgba(0, 0, 0, 0.08));
+  transform: scale(0);
+  animation: ripple 700ms ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes ripple {
+  from {
+    transform: scale(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: scale(2);
+    opacity: 0;
+  }
+}

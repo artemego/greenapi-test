@@ -1,0 +1,82 @@
+@use '@/shared/styles/mixins' as *;
+
+.button {
+  @include reset-button;
+
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  outline: none;
+  transition:
+    background-color 150ms var(--ease),
+    color 150ms var(--ease),
+    box-shadow 150ms var(--ease);
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px var(--color-primary-tint-strong);
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+.small {
+  width: 2rem;
+  height: 2rem;
+}
+
+.medium {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.large {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+.plain {
+  color: var(--color-text-secondary);
+
+  &:hover:not(:disabled),
+  &[data-state='open'] {
+    background: var(--color-hover);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.primary {
+  --ripple-color: rgba(255, 255, 255, 0.2);
+
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+  box-shadow: var(--shadow-fab);
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+  }
+}
+
+.raised {
+  --ripple-color: rgba(255, 255, 255, 0.2);
+
+  background: var(--color-bg);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-bubble);
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary);
+    color: var(--color-text-on-primary);
+  }
+
+  &:disabled {
+    color: var(--color-placeholder);
+  }
+}

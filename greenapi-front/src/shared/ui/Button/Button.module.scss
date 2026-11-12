@@ -1,0 +1,83 @@
+@use '@/shared/styles/mixins' as *;
+
+.button {
+  @include reset-button;
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 3.375rem;
+  padding: 0 1.5rem;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  white-space: nowrap;
+  outline: none;
+  transition:
+    background-color 150ms var(--ease),
+    color 150ms var(--ease),
+    opacity 150ms var(--ease);
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px var(--color-primary-tint-strong);
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+
+  &:disabled:not(.loading) {
+    opacity: 0.5;
+  }
+}
+
+.primary {
+  --ripple-color: rgba(255, 255, 255, 0.2);
+
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+  }
+}
+
+.text {
+  --ripple-color: var(--color-primary-tint-strong);
+
+  background: transparent;
+  color: var(--color-primary);
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-tint);
+  }
+}
+
+.danger {
+  --ripple-color: rgba(229, 57, 53, 0.16);
+
+  background: transparent;
+  color: var(--color-error);
+
+  &:hover:not(:disabled) {
+    background: var(--color-error-tint);
+  }
+}
+
+.small {
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.loading {
+  cursor: progress;
+}

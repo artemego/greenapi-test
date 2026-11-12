@@ -1,0 +1,55 @@
+@use '@/shared/styles/mixins' as *;
+
+$min-height: 3.5rem;
+
+.composer {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-end;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: var(--messages-max-width);
+  margin: 0 auto;
+  padding: 0 1rem 1.25rem;
+
+  @include mobile {
+    padding: 0 0.5rem 0.5rem;
+  }
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  border-radius: var(--radius-bubble);
+  border-bottom-right-radius: 0;
+  background: var(--color-bubble-in);
+  box-shadow: var(--shadow-bubble);
+}
+
+.textarea {
+  @include scrollbar;
+
+  display: block;
+  flex: 1;
+  min-height: $min-height;
+  max-height: 16.5rem;
+  padding: calc(($min-height - 1rem * 1.3125) / 2) 1rem;
+  border: none;
+  border-radius: inherit;
+  background: transparent;
+  font-size: 1rem;
+  line-height: var(--line-height);
+  caret-color: var(--color-primary);
+  outline: none;
+  resize: none;
+
+  &::placeholder {
+    color: var(--color-placeholder);
+  }
+}
+
+.tail {
+  color: var(--color-bubble-in);
+}

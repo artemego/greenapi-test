@@ -1,0 +1,42 @@
+@use '@/shared/styles/mixins' as *;
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.5rem;
+  padding: 0.375rem 0.75rem 0.375rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25;
+}
+
+.info {
+  background: var(--color-primary-tint);
+  color: var(--color-primary);
+}
+
+.warning {
+  background: var(--color-error-tint);
+  color: var(--color-error);
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  color: var(--color-text);
+}
+
+.action {
+  @include reset-button;
+
+  flex-shrink: 0;
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+}

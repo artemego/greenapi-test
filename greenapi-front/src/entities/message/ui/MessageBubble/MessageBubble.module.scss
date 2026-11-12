@@ -1,0 +1,104 @@
+@use '@/shared/styles/mixins' as *;
+
+.row {
+  display: flex;
+  margin-top: 0.1875rem;
+}
+
+.first {
+  margin-top: 0.5rem;
+}
+
+.outgoing {
+  justify-content: flex-end;
+}
+
+.bubble {
+  position: relative;
+  max-width: min(30rem, calc(100% - 2.5rem));
+  padding: 0.3125rem 0.5rem 0.375rem 0.625rem;
+  border-radius: var(--radius-bubble);
+  box-shadow: var(--shadow-bubble);
+  line-height: var(--line-height);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.incoming .bubble {
+  background: var(--color-bubble-in);
+  color: var(--color-text);
+}
+
+.incoming:not(.first) .bubble {
+  border-top-left-radius: var(--radius-bubble-grouped);
+}
+
+.incoming:not(.last) .bubble {
+  border-bottom-left-radius: var(--radius-bubble-grouped);
+}
+
+.incoming.last .bubble {
+  border-bottom-left-radius: 0;
+}
+
+.outgoing .bubble {
+  background: var(--color-bubble-out);
+}
+
+.outgoing:not(.first) .bubble {
+  border-top-right-radius: var(--radius-bubble-grouped);
+}
+
+.outgoing:not(.last) .bubble {
+  border-bottom-right-radius: var(--radius-bubble-grouped);
+}
+
+.outgoing.last .bubble {
+  border-bottom-right-radius: 0;
+}
+
+.incoming .tail {
+  color: var(--color-bubble-in);
+}
+
+.outgoing .tail {
+  color: var(--color-bubble-out);
+}
+
+%meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1875rem;
+  font-size: var(--font-size-meta);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.spacer {
+  @extend %meta;
+
+  visibility: hidden;
+  height: 0.75rem;
+  margin-left: 0.5rem;
+}
+
+.meta {
+  @extend %meta;
+
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.3125rem;
+  color: var(--color-meta-in);
+  user-select: none;
+}
+
+.outgoing .meta {
+  color: var(--color-meta-out);
+}
+
+.failed {
+  @include reset-button;
+
+  display: flex;
+  color: var(--color-error);
+}

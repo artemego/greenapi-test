@@ -1,0 +1,10 @@
+.list {
+  width: 100%;
+  max-width: var(--messages-max-width);
+  margin: 0 auto;
+  padding: 0 1rem 0.75rem;
+}
+
+.day {
+  position: relative;
+}

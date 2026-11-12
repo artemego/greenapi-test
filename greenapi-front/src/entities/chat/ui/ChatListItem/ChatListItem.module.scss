@@ -1,0 +1,143 @@
+@use '@/shared/styles/mixins' as *;
+
+.item {
+  @include reset-button;
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  height: 4.5rem;
+  padding: 0.5625rem;
+  border-radius: var(--radius);
+  text-align: left;
+  transition: background-color 150ms var(--ease);
+
+  &:hover {
+    background: var(--color-chat-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    background: var(--color-chat-hover);
+  }
+}
+
+.info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.title {
+  @include ellipsis;
+
+  flex: 1;
+  font-weight: 500;
+  line-height: 1.375rem;
+}
+
+.time {
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+}
+
+.preview {
+  @include ellipsis;
+
+  flex: 1;
+  color: var(--color-text-secondary);
+  line-height: 1.5rem;
+}
+
+.badge {
+  flex-shrink: 0;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  margin-left: 0.5rem;
+  padding: 0 0.4375rem;
+  border-radius: 0.75rem;
+  background: var(--color-unread);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5rem;
+  text-align: center;
+}
+
+.selected {
+  --ripple-color: rgba(255, 255, 255, 0.2);
+
+  &,
+  &:hover,
+  &:focus-visible {
+    background: var(--color-primary);
+  }
+
+  .title,
+  .time,
+  .preview {
+    color: var(--color-text-on-primary);
+  }
+
+  .badge {
+    background: var(--color-bg);
+    color: var(--color-primary);
+  }
+}
+
+.skeleton {
+  pointer-events: none;
+
+  .info {
+    gap: 0.625rem;
+  }
+}
+
+%shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-skeleton) 0%,
+    #f8f9fa 50%,
+    var(--color-skeleton) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+
+.skeletonAvatar {
+  @extend %shimmer;
+
+  flex-shrink: 0;
+  width: 3.375rem;
+  height: 3.375rem;
+  border-radius: 50%;
+}
+
+.skeletonLine {
+  @extend %shimmer;
+
+  height: 0.875rem;
+  border-radius: 0.4375rem;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}

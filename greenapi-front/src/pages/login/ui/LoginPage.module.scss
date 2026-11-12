@@ -1,0 +1,57 @@
+@use '@/shared/styles/mixins' as *;
+
+.page {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--color-bg);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 25.5rem;
+  margin: 0 auto;
+  padding: 6.5rem 1.5rem 2rem;
+  text-align: center;
+
+  @include mobile {
+    padding-top: 3rem;
+  }
+}
+
+.logo {
+  width: 10rem;
+  height: 10rem;
+  margin-bottom: 1.75rem;
+
+  @include mobile {
+    width: 7.5rem;
+    height: 7.5rem;
+  }
+}
+
+.title {
+  margin-bottom: 0.625rem;
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.note {
+  margin-bottom: 2.75rem;
+  color: var(--color-text-secondary);
+  line-height: 1.35;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.submit {
+  margin-top: 2rem;
+}
