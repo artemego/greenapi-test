@@ -14,16 +14,22 @@ import { MessagesModule } from './messages/messages.module.js';
     ConfigModule.forRoot({ isGlobal: true, validationSchema: envSchema }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: AppConfigService) => ({
-        type: 'postgres',
-        host: config.get('DB_HOST', { infer: true }),
-        port: config.get('DB_PORT', { infer: true }),
-        username: config.get('DB_USER', { infer: true }),
-        password: config.get('DB_PASSWORD', { infer: true }),
-        database: config.get('DB_NAME', { infer: true }),
-        autoLoadEntities: true,
-        synchronize: config.get('NODE_ENV', { infer: true }) !== 'production', // dev only
-      }),
+      useFactory: (config: AppConfigService) => {
+        const ca = config.get('DB_SSL_CA', { infer: true });
+        return {
+          type: 'postgres',
+          host: config.get('DB_HOST', { infer: true }),
+          port: config.get('DB_PORT', { infer: true }),
+          username: config.get('DB_USER', { infer: true }),
+          password: config.get('DB_PASSWORD', { infer: true }),
+          database: config.get('DB_NAME', { infer: true }),
+          autoLoadEntities: true,
+          ssl: ca ? { ca } : config.get('DB_SSL', { infer: true }),
+          synchronize:
+            config.get('DB_SYNCHRONIZE', { infer: true }) ??
+            config.get('NODE_ENV', { infer: true }) !== 'production',
+        };
+      },
     }),
     // Opaque session cookie + global guard: every route needs a session unless @Public().
     AuthenticationModule.forRootAsync({
