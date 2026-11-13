@@ -1,6 +1,7 @@
 @use '@/shared/styles/mixins' as *;
 
 .layout {
+  position: relative;
   display: flex;
   height: 100%;
 }
@@ -14,5 +15,13 @@
 
   @include mobile {
     display: none;
+  }
+}
+
+.chatOpen .main {
+  @include mobile {
+    position: absolute;
+    inset: 0;
+    display: flex;
   }
 }
