@@ -27,6 +27,9 @@ export const envSchema = z.object({
   // Unset: on outside production. Set to true in production only while there are no migrations.
   DB_SYNCHRONIZE: flag.optional(),
 
+  // Directory with the built frontend (index.html + assets). Set in the production image only.
+  STATIC_DIR: z.string().min(1).optional(),
+
   GREEN_API_URL: url,
   FRONTEND_ORIGIN: url,
   SESSION_TTL_DAYS: z.coerce.number().int().positive().default(7),

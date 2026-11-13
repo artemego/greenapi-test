@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthenticationModule } from '@nestjs/authentication';
 import { AuthModule } from './auth/auth.module.js';
@@ -47,6 +48,15 @@ import { MessagesModule } from './messages/messages.module.js';
           trustedOrigins: [config.get('FRONTEND_ORIGIN', { infer: true })],
         },
       }),
+    }),
+    // Production: the same container serves the built frontend, so the browser reaches the API
+    // (and its SSE stream) on one origin with no proxy in between. Off when STATIC_DIR is unset.
+    ServeStaticModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: AppConfigService) => {
+        const rootPath = config.get('STATIC_DIR', { infer: true });
+        return rootPath ? [{ rootPath, exclude: ['/api/{*path}'] }] : [];
+      },
     }),
     InstancesModule,
     AuthModule,
