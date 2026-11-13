@@ -15,26 +15,35 @@ type MessageBubbleProps = {
 export function MessageBubble({ message, first, last, onFailedClick }: MessageBubbleProps) {
   const outgoing = message.direction === 'outgoing';
 
+  function renderStatus(interactive: boolean) {
+    switch (message.status) {
+      case 'sending':
+        return <Icon name="clock" size={15} />;
+      case 'read':
+        return <Icon name="checkDouble" size={18} />;
+      case 'failed':
+        return interactive && message.local ? (
+          <button
+            type="button"
+            className={styles.failed}
+            onClick={() => onFailedClick?.(message)}
+            aria-label="Not sent. Retry or delete"
+          >
+            <Icon name="alert" size={16} />
+          </button>
+        ) : (
+          <Icon name="alert" size={16} className={styles.failedIcon} />
+        );
+      default:
+        return <Icon name="check" size={17} />;
+    }
+  }
+
   function renderMeta(interactive: boolean) {
     return (
       <>
         <span>{formatTime(message.sentAt)}</span>
-        {outgoing && message.status === 'sending' && <Icon name="clock" size={15} />}
-        {outgoing && !message.status && <Icon name="check" size={17} />}
-        {outgoing &&
-          message.status === 'failed' &&
-          (interactive ? (
-            <button
-              type="button"
-              className={styles.failed}
-              onClick={() => onFailedClick?.(message)}
-              aria-label="Not sent. Retry or delete"
-            >
-              <Icon name="alert" size={16} />
-            </button>
-          ) : (
-            <Icon name="alert" size={16} />
-          ))}
+        {outgoing && renderStatus(interactive)}
       </>
     );
   }

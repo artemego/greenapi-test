@@ -73,7 +73,7 @@ export function MessengerMock() {
       setMessages((current) =>
         current.map((message) =>
           message.id === id
-            ? { ...message, status: text.toLowerCase().includes('fail') ? 'failed' : undefined }
+            ? { ...message, status: text.toLowerCase().includes('fail') ? 'failed' : 'sent' }
             : message,
         ),
       );
@@ -85,7 +85,14 @@ export function MessengerMock() {
     const id = `local-${Date.now()}`;
     setMessages((current) => [
       ...current,
-      { id, direction: 'outgoing', text, sentAt: new Date().toISOString(), status: 'sending' },
+      {
+        id,
+        direction: 'outgoing',
+        text,
+        sentAt: new Date().toISOString(),
+        status: 'sending',
+        local: true,
+      },
     ]);
     setDraft('');
     deliver(id, text.replace(/fail/gi, ''));

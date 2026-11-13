@@ -112,23 +112,39 @@ export const mockMessages: ChatMessage[] = script.map(([offset, direction, text]
   direction,
   text,
   sentAt: ago(offset),
+  status: direction === 'incoming' ? null : offset > 10 * MINUTE ? 'read' : 'sent',
 }));
 
 export const mockShortConversation: ChatMessage[] = [
-  { id: 's1', direction: 'incoming', text: 'Hello! 👋', sentAt: ago(10 * MINUTE) },
+  { id: 's1', direction: 'incoming', text: 'Hello! 👋', sentAt: ago(10 * MINUTE), status: null },
   {
     id: 's2',
     direction: 'incoming',
     text: 'Grouped incoming messages share a side and only the last one has a tail',
     sentAt: ago(9 * MINUTE),
+    status: null,
   },
-  { id: 's3', direction: 'outgoing', text: 'Sent', sentAt: ago(8 * MINUTE) },
+  {
+    id: 's3',
+    direction: 'outgoing',
+    text: 'Read: two checks once the recipient opens it',
+    sentAt: ago(8 * MINUTE),
+    status: 'read',
+  },
+  {
+    id: 's3b',
+    direction: 'outgoing',
+    text: 'Sent or delivered: one check',
+    sentAt: ago(8 * MINUTE),
+    status: 'sent',
+  },
   {
     id: 's4',
     direction: 'outgoing',
     text: 'Sending: the clock icon shows until the server confirms',
     sentAt: ago(7 * MINUTE),
     status: 'sending',
+    local: true,
   },
   {
     id: 's5',
@@ -136,5 +152,6 @@ export const mockShortConversation: ChatMessage[] = [
     text: 'Failed: click the red icon to retry',
     sentAt: ago(6 * MINUTE),
     status: 'failed',
+    local: true,
   },
 ];

@@ -1,6 +1,6 @@
 import type { InfiniteData } from '@tanstack/react-query';
 import type { Chat } from '@/entities/chat';
-import type { ChatMessage, LocalStatus, Message } from '@/entities/message';
+import type { ChatMessage, Message, MessageStatus } from '@/entities/message';
 
 export type MessagePages = InfiniteData<ChatMessage[], string | undefined>;
 
@@ -43,6 +43,17 @@ export function appendMessage(data: MessagePages, message: ChatMessage): Message
   return { ...data, pages: [[...newest, message], ...older] };
 }
 
+export function receiveMessage(data: MessagePages, message: Message): MessagePages {
+  if (hasMessage(data, message.id)) return data;
+  if (message.direction === 'outgoing') {
+    const pending = flattenPages(data).find(
+      (item) => item.local && item.status === 'sending' && item.text === message.text,
+    );
+    if (pending) return mapMessages(data, (item) => (item.id === pending.id ? message : item));
+  }
+  return appendMessage(data, message);
+}
+
 export function upsertMessage(data: MessagePages, message: ChatMessage): MessagePages {
   if (!hasMessage(data, message.id)) return appendMessage(data, message);
   return mapMessages(data, (item) => (item.id === message.id ? message : item));
@@ -60,12 +71,12 @@ export function resolveLocalMessage(
   });
 }
 
-export function setLocalStatus(
+export function setMessageStatus(
   data: MessagePages,
-  localId: string,
-  status: LocalStatus,
+  id: string,
+  status: MessageStatus,
 ): MessagePages {
-  return mapMessages(data, (item) => (item.id === localId ? { ...item, status } : item));
+  return mapMessages(data, (item) => (item.id === id ? { ...item, status } : item));
 }
 
 export function removeMessage(data: MessagePages, id: string): MessagePages {

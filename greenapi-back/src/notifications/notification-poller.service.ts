@@ -12,8 +12,11 @@ import { InstancesService } from '../instances/instances.service.js';
 import { NotificationHandler } from './notification.handler.js';
 import { NotificationSettingsService } from './notification-settings.service.js';
 
-/** How long one receiveNotification call waits for a notification (GREEN-API allows 5..60). */
-const RECEIVE_TIMEOUT_SEC = 20;
+/**
+ * How long one receiveNotification call waits for a notification. GREEN-API
+ * documents 5..60, but its gateway answers 504 after ~15s, so stay below that.
+ */
+const RECEIVE_TIMEOUT_SEC = 10;
 const BACKOFF_START_MS = 1_000;
 const BACKOFF_MAX_MS = 30_000;
 /** Pause after fixing settings: setSettings restarts the instance. */

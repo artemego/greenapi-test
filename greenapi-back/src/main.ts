@@ -6,7 +6,8 @@ import { AppModule } from './app.module.js';
 import type { AppConfigService } from './config/env.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Open SSE streams would otherwise keep the server from closing on shutdown (and on every watch restart).
+  const app = await NestFactory.create(AppModule, { forceCloseConnections: true });
   const config = app.get<AppConfigService>(ConfigService);
 
   app.setGlobalPrefix('api');

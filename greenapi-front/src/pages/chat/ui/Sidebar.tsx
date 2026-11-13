@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { useMatch, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { ChatListItem, ChatListItemSkeleton, chatTitle, type Chat } from '@/entities/chat';
+import { useMe } from '@/shared/api';
 import { phoneDigits } from '@/shared/lib';
-import { Button, IconButton, Menu, MenuItem, Modal, SearchInput } from '@/shared/ui';
+import { Banner, Button, IconButton, Menu, MenuItem, Modal, SearchInput } from '@/shared/ui';
 import { useChats } from '../api/useChats';
 import { useLogout } from '../api/useLogout';
+import type { ConnectionState } from '../model/useLiveEvents';
 import { NewChatModal } from './NewChatModal';
 import styles from './Sidebar.module.scss';
 
@@ -20,14 +22,33 @@ function matchesQuery(chat: Chat, query: string) {
   );
 }
 
-export function Sidebar() {
+type SidebarProps = {
+  selectedId?: string;
+  connection: ConnectionState;
+  unread: Record<string, number>;
+};
+
+export function Sidebar({ selectedId, connection, unread }: SidebarProps) {
   const [query, setQuery] = useState('');
   const [newChatOpen, setNewChatOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const chats = useChats();
+  const { data: me } = useMe();
   const logout = useLogout();
   const navigate = useNavigate();
-  const selectedId = useMatch('/chats/:chatId')?.params.chatId;
+  const instanceLost = Boolean(me && me.state !== 'authorized');
+
+  function renderBanner() {
+    if (instanceLost) {
+      return (
+        <Banner tone="warning" action={{ label: 'Log in again', onClick: () => logout.mutate() }}>
+          Instance is not authorized in GREEN-API
+        </Banner>
+      );
+    }
+    if (connection === 'reconnecting') return <Banner loading>Reconnecting…</Banner>;
+    return null;
+  }
 
   function renderList() {
     if (chats.isPending) {
@@ -69,6 +90,7 @@ export function Sidebar() {
         key={chat.id}
         chat={chat}
         selected={chat.id === selectedId}
+        unreadCount={chat.id === selectedId ? 0 : unread[chat.id]}
         onSelect={() => navigate(`/chats/${chat.id}`)}
       />
     ));
@@ -88,6 +110,8 @@ export function Sidebar() {
           </MenuItem>
         </Menu>
       </div>
+
+      {renderBanner()}
 
       <nav className={styles.list} aria-label="Chats">
         {renderList()}

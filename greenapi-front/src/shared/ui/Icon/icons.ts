@@ -1,5 +1,6 @@
 import Alert from '@/shared/assets/icons/alert.svg?react';
 import ArrowLeft from '@/shared/assets/icons/arrow-left.svg?react';
+import CheckDouble from '@/shared/assets/icons/check-double.svg?react';
 import Check from '@/shared/assets/icons/check.svg?react';
 import ChevronDown from '@/shared/assets/icons/chevron-down.svg?react';
 import Clock from '@/shared/assets/icons/clock.svg?react';
@@ -20,6 +21,7 @@ export const icons = {
   alert: Alert,
   arrowLeft: ArrowLeft,
   check: Check,
+  checkDouble: CheckDouble,
   chevronDown: ChevronDown,
   clock: Clock,
   close: Close,

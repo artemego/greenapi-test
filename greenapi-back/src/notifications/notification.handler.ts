@@ -137,6 +137,7 @@ export class NotificationHandler {
 
     if (MessageStatusRank[status] <= MessageStatusRank[message.status ?? 'sent']) return;
     await this.messages.update({ id: message.id }, { status });
+    this.logger.log(`Message ${message.id} is now ${status}`);
     this.bus.emit(instanceId, 'message.status', { chatId: chat.id, messageId: message.id, status });
   }
 

@@ -4,7 +4,7 @@ import type { Message } from '@/entities/message';
 import { api, queryKeys } from '@/shared/api';
 import {
   resolveLocalMessage,
-  setLocalStatus,
+  setMessageStatus,
   touchChat,
   upsertMessage,
   type MessagePages,
@@ -33,6 +33,7 @@ export function useSendMessage(chatId: string) {
             text,
             sentAt: new Date().toISOString(),
             status: 'sending',
+            local: true,
           }),
       );
     },
@@ -49,7 +50,7 @@ export function useSendMessage(chatId: string) {
     onError: (_error, { localId }) => {
       queryClient.setQueryData<MessagePages>(
         messagesKey,
-        (data) => data && setLocalStatus(data, localId, 'failed'),
+        (data) => data && setMessageStatus(data, localId, 'failed'),
       );
     },
   });
