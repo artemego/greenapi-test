@@ -2,11 +2,9 @@ import { createBrowserRouter, Navigate } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { ChatPage, Conversation, EmptyConversation } from '@/pages/chat';
 import { LoginPage } from '@/pages/login';
-import { UiKitPage } from '@/pages/ui-kit';
 import { GuestOnly, RequireAuth } from './guards';
 
 const router = createBrowserRouter([
-  { path: '/ui-kit', element: <UiKitPage /> },
   {
     element: <GuestOnly />,
     children: [{ path: '/login', element: <LoginPage /> }],
